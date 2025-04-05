@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import jwt from 'jsonwebtoken'
 
 
 
@@ -72,6 +73,13 @@ const userSchema = mongoose.Schema({
     }
 
 })
+
+
+userSchema.methods.getAuthToken = function () {
+    return jwt.sign({_id: this._id},process.env.SECRET_KEY)
+}
+
+
 
 
 export default  mongoose.model('Users', userSchema);
