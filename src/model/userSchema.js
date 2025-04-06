@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken'
 
 const userSchema = mongoose.Schema({
     name:String,
+    last_name:String,
+    username:String,
     email: {
         type: String,
         required: true,
@@ -18,7 +20,7 @@ const userSchema = mongoose.Schema({
         type:String,
         enum:['admin','user', 'private'],
     },
-
+    
     profile_pic:{
         type:String,
         default:'avatar.png'
@@ -30,7 +32,10 @@ const userSchema = mongoose.Schema({
             mark:String,
             start:String,
             end:String,
-            present:Boolean,
+            present:{
+                type:Boolean,
+                default:false
+            },
             des:String
         },
     ],
@@ -60,6 +65,7 @@ const userSchema = mongoose.Schema({
     },
     isDelete:{
         type:Boolean,
+        default:false
     },
     agree:{
         type:Boolean,
