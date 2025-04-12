@@ -19,6 +19,13 @@ const postSchema = mongoose.Schema({
 
   location: String,
 
+  guests: [
+    {
+      email: String,
+      profile_img: String,
+    },
+  ],
+
   like: [
     {
       status: Boolean,
@@ -51,6 +58,11 @@ const postSchema = mongoose.Schema({
       ],
     },
   ],
+
+  story: {
+    type: Boolean,
+    default: false,
+  },
 
   createAt: {
     type: Date,
