@@ -1,22 +1,20 @@
 import Users from "../model/userSchema.js";
 import Notifications from "../model/notification.js";
+import fs from "fs";
+import { sendError, sendResponse } from "../helper/sender.js";
 
 export const reg = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
     if (!name || !email || !password || !role) {
-      return res
-        .status(400)
-        .json({ status: false, msg: "Please fill in all fields" });
+      return sendResponse(res, false, "Fill all fields");
     }
 
     const user = await Users.findOne({ email: email });
 
     if (user) {
-      return res
-        .status(400)
-        .json({ status: false, message: "User already exists" });
+      return sendResponse(res, false, "User already exist");
     }
 
     const newUser = new Users({
@@ -39,11 +37,7 @@ export const reg = async (req, res) => {
       .status(200)
       .json({ status: true, message: "User created successfully" });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      message: "Error creating user",
-      error: error.message,
-    });
+    sendError(res, error);
   }
 };
 
@@ -52,21 +46,17 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email && !password) {
-      return res
-        .status(200)
-        .json({ status: false, message: "Please fill in all fields" });
+      return sendResponse(res, false, "Fill all fields");
     }
 
     const user = await Users.findOne({ email: email });
 
     if (!user) {
-      return res.status(400).json({ status: false, message: "User not exist" });
+      return sendResponse(res, false, "User not exist");
     }
 
     if (user.isDelete == true && user.createAt < Date.now()) {
-      return res
-        .status(400)
-        .json({ status: false, message: "User is deleted" });
+      return sendResponse(res, false, "Account Deleted");
     }
 
     if (user.isDelete == true) {
@@ -90,15 +80,19 @@ export const login = async (req, res) => {
 
 export const profile = async (req, res) => {
   try {
+    if (!req.user) {
+      return sendResponse(res, false, "token");
+    }
+
     const user = await Users.findById(req.user._id);
 
     if (!user) {
-      return res.status(400).json({ status: false, message: "User not exist" });
+      return sendResponse(res, false, "User not exist");
     }
 
     res.json({ status: true, user: user });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -106,10 +100,20 @@ export const profileSetting = async (req, res) => {
   try {
     const { name, last_name, username, phone, gender, dob, address } = req.body;
 
+    if (!req.file) {
+      return sendResponse(res, false, "Choose Picture");
+    }
     const user = await Users.findById(req.user._id);
 
     if (!user) {
-      return res.status(400).json({ status: false, message: "User not exist" });
+      return sendResponse(res, false, "User not exist");
+    }
+
+    // already upload to renove and add new picture
+    if (user.profile_pic != "empty-avatar.png") {
+      // remove to profile in server/public folder all ready upload in database
+      //   remove old picture
+      fs.unlinkSync(`./public/profile/${user.profile_pic}`);
     }
 
     const data = {
@@ -120,19 +124,16 @@ export const profileSetting = async (req, res) => {
       gender,
       dob,
       address,
+      profile_pic: req.file.filename,
     };
 
     const update = await Users.findByIdAndUpdate(req.user._id, data, {
       new: true,
     });
 
-    res.json({
-      status: true,
-      user: update,
-      message: "User profile updated successfully",
-    });
+    sendResponse(res, true, "User profile updated successfully", update);
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -143,7 +144,7 @@ export const changePassword = async (req, res) => {
     const user = await Users.findById(req.user._id);
 
     if (!user) {
-      return res.status(400).json({ status: false, message: "User not exist" });
+      return sendResponse(res, false, "User not exist");
     }
 
     if (user.password !== oldPassword) {
@@ -166,7 +167,7 @@ export const changePassword = async (req, res) => {
       message: "User profile updated successfully",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -177,7 +178,7 @@ export const userInfo = async (req, res) => {
     const user = await Users.findById(req.user._id);
 
     if (!user) {
-      return res.status(400).json({ status: false, message: "User not exist" });
+      return sendResponse(res, false, "User not exist");
     }
 
     user.education.push(education);
@@ -192,7 +193,7 @@ export const userInfo = async (req, res) => {
       message: "User skills updated successfully",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -209,7 +210,7 @@ export const notification = async (req, res) => {
 
     res.json({ status: true, message: "Notification updated successfully" });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -230,6 +231,6 @@ export const isDelete = async (req, res) => {
 
     res.json({ status: true, message: "User account deleted successfully" });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };

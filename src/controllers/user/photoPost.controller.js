@@ -1,14 +1,34 @@
 import Users from "../../model/userSchema.js";
 import Posts from "../../model/postSchema.js";
+import { sendError, sendResponse } from "../../helper/sender.js";
 
 export const postPhoto = async (req, res) => {
   try {
     const { _id } = req.user;
 
+    if (!req.file) {
+      return sendResponse(res, false, "Choose Picture");
+    }
+
+    if (req.user._id.toString() != userId.toString()) {
+      return sendResponse(res, false, "Not valide");
+    }
+
+    // already upload to renove and add new picture
+    if (user.profile_picture != "empty-avatar.png") {
+      // remove to profile in server/public folder all ready upload in database
+      //   remove old picture
+      fs.unlinkSync(`./public/profile/${user.profile_picture}`);
+    }
+
+    const temp = {
+      profile_picture: req.file.filename,
+    };
+
     const { caption, description } = req.body;
 
     if (!caption || !description) {
-      return res.status(400).json({ message: "Please fill in all fields" });
+      return sendResponse(res, false, "Please fill in all fields");
     }
 
     const user = await Users.findById(_id);
@@ -23,9 +43,9 @@ export const postPhoto = async (req, res) => {
 
     await post.save();
 
-    res.status(201).json({ message: "Post created successfully" });
+    sendResponse(res, true, "Post successfully");
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -53,7 +73,7 @@ export const postVideo = async (req, res) => {
 
     res.status(201).json({ message: "Post created successfully" });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -96,7 +116,7 @@ export const postEvents = async (req, res) => {
 
     res.status(201).json({ message: " created Event successfully" });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -128,7 +148,7 @@ export const postLike = async (req, res) => {
       message: status ? "user liked post " : "user unlike post ",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -163,7 +183,7 @@ export const postReplayLike = async (req, res) => {
       message: status ? "user liked post " : "user unlike post ",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -197,7 +217,7 @@ export const postComments = async (req, res) => {
       message: "user Comments your post ",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };
 
@@ -236,6 +256,6 @@ export const postReplayComment = async (req, res) => {
       message: "user replay your Comments ",
     });
   } catch (error) {
-    res.json({ error, status: false });
+    sendError(res, error);
   }
 };

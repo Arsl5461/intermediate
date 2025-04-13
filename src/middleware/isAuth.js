@@ -5,14 +5,17 @@ import jwt from 'jsonwebtoken'
 export const isAuth = async (req, res, next) => {
 
     try {
+        const token = req?.headers.authorization.split(' ')[1]
         
-        const token = req?.headers?.Authorization.split(' ')[1];
         if(!token){
             return res.status(401).json({message: 'Access denied'})
         }
 
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        req.user = await Users.findOne(decoded._id)
+
+        console.log(decoded)
+
+        req.user = await Users.findById(decoded._id)
 
         next()
 
